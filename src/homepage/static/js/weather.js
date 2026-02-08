@@ -2,51 +2,24 @@ class WeatherForecast {
 
     constructor() {
         let today = moment().format("YYYY-MM-DD");
-        $("#today").html("Today is " + moment().format("dddd MMMM Do YYYY"));
+        $('#today').html('Today is ' + moment().format('dddd MMMM Do YYYY'));
         this.addEventListeners();
     }
 
     handleKeyEvent() {
-        let param = $('input[name="search_param"]:checked').val();
-        if (param == 'city') {
-            let city = $('input[name="city"]').val();
-            if (city.length > 0) {
-                $('button[type="submit"]').prop('disabled', false);
-            }
-            else {
-                $('button[type="submit"]').prop('disabled', true);
-            }
+        let latitude = $('input[name="latitude"]').val();
+        let longitude = $('input[name="longitude"]').val();
+        if (latitude.length > 0 && longitude.length > 0) {
+            $('button[type="submit"]').prop('disabled', false);
         }
-        else if (param == 'coordinates') {
-            let latitude = $('input[name="latitude"]').val();
-            let longitude = $('input[name="longitude"]').val();
-            if (latitude.length > 0 && longitude.length > 0) {
-                $('button[type="submit"]').prop('disabled', false);
-            }
-            else {
-                $('button[type="submit"]').prop('disabled', true);
-            }
+        else {
+            $('button[type="submit"]').prop('disabled', true);
         }
-    }
-
-    handleRadioEvent() {
-        let val = $('input[name="search_param"]:checked').val();
-        if (val == 'city') {
-            $('#search_by_city').show();
-            $('#search_by_coordinates').hide();
-        } else {
-            $('#search_by_city').hide();
-            $('#search_by_coordinates').show();
-        }
-        handleKeyEvent();
     }
 
     handleSubmit(e) {
         e.preventDefault();
-        $.post('/weather_data', $('#searchform').serialize(), function(data) {
-            $('input[name="city"]').val(data['city']);
-            $('input[name="latitude"]').val(data['latitude']);
-            $('input[name="longitude"]').val(data['longitude']);
+        $.post('/api/weather/data', $('#searchform').serialize(), function(data) {
             $('#forecast tr:not(:first-child)').remove();
             for (let i = 0; i < data['periods'].length; i++) {
                 let period = data['periods'][i];
@@ -78,15 +51,18 @@ class WeatherForecast {
                 $('#forecast').append(tr);
             }
             $('#forecast').show();
+            $('#error').empty().hide();
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            $('#forecast tr:not(:first-child)').remove();
+            $('#forecast').hide();
+            $('#error').html(jqXHR.responseJSON.message).show();
         });
     }
 
     addEventListeners() {
-        $('input[name="city"]').on('input', this.handleKeyEvent);
         $('input[name="latitude"]').on('input', this.handleKeyEvent);
         $('input[name="longitude"]').on('input', this.handleKeyEvent);
-        $('input[name="search_param"]').on('change', this.handleRadioEvent);
-        $("#searchform").on('submit', this.handleSubmit);
+        $('#searchform').on('submit', this.handleSubmit);
     }
 }
 
